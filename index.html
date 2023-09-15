@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        .player-marker {
+            position: absolute;
+            width: 10px/* specify the width of the marker */;
+            height: 10px/* specify the height of the marker */;
+            background-color: red;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* to prevent any scrolling */
+            background-color: #A8A77A;
+            font-family: 'Open Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-dark text-light" style="font-family: 'Open Sans', sans-serif; background-color: #A8A77A; z-index: 0; overflow-x: hidden; overflow-y: hidden">
+<div id="app">
+    <div v-if="ready === false"></div>
+    <div v-else>
+        <div class="position-relative map-container" style="width: 18rem;">
+            <img class="w-100" src="https://upload.wikimedia.org/wikibooks/en/d/d7/Kanto.JPG" alt="map">
+
+            <!-- Positioned span for map value -->
+            <span class="position-absolute top-0 start-0 fs-6">
+                {{this.mapper.properties.overworld.map.value}}
+            </span>
+
+            <!-- Player marker, assuming it's absolutely positioned -->
+            <div class="player-marker position-absolute" :style="this.getPlayerLocation()"></div>
+
+            <!-- Positioned span for safari steps -->
+            <span v-show="this.mapper.properties.overworld.safariZone.safariTime.value > 0 && this.mapper.properties.overworld.map.value.includes('Safari Zone')"
+                  class="position-absolute bottom-0 end-0 fs-4">
+                Steps:{{this.mapper.properties.overworld.safariZone.safariTime}}
+            </span>
+        </div>
+        <div class="playerCard col" :style="this.getPokemonDataFromJSON('background','player')">
+            <div class="pokemon-name">Lvl: {{getPokemonDataFromMapper('level', 'player')}}
+                <br>{{getPokemonDataFromMapper('name', 'player')}}
+            </div>
+            <div class="pokemon-type">
+              <span v-for="types in getPokemonDataFromJSON('type','player')">
+                <img :src="types" alt="types">
+              </span>
+            </div>
+            <div class="d-flex justify-content-center">
+                <div class="row">
+                    <!-- Regular stats -->
+                    <li v-for="(stat, index) in getPokemonDataFromMapper('stats', 'player')"
+                        :key="stat.name"
+                        class="list-group-item col-md-5"
+                        :class="{ 'mt-3': index >= 2 }">
+                        {{ stat.name }}: {{ stat.value }}
+                    </li>
+                    <!-- Badge count item -->
+                    <li class="list-group-item col-md-5 mt-3">
+                        badges: {{ getPokemonDataFromMapper('badges', 'player').badge }}
+                    </li>
+                </div>
+            </div>
+            <!--            <div class="pokemon-image-container" :style="setBackgroundForPokemonImageContainer('player')">-->
+<!--                <img class="pokemon-status-image" :src="getStatusCondition('player')" alt="statusCondition">-->
+<!--                <img class="pokemon-image" :src="getCurrentPokemonSprite('player')" alt="Pokémon Image">-->
+<!--            </div>-->
+<!--            <div class="crit-Rate">-->
+<!--                <p>crit: <br>{{calculateCriticalHitRate('player')}}%</p>-->
+<!--            </div>-->
+            <div class="reset"></div>
+            <div class="experience-group">
+                <li class="list-group-item">Growth Rate: {{ getPokemonDataFromMapper('growthRate', 'player') }} <br>Current exp: {{ getPokemonDataFromJSON('growthFormula', 'player') }}</li>
+                <li class="list-group-item"></li>
+            </div>
+            <!-- Exp Bar -->
+<!--            <div class="exp-bar-container">-->
+<!--                <span class="exp-bar" :style="this.createExpBar(this.getDataFromMapper('level', 'player'))"></span>-->
+<!--            </div>-->
+            <div class="pokemon-moves">
+                <div class="d-flex justify-content-center">
+                    <div class="row">
+                        <li v-for="(moves, index) in getPokemonDataFromMapper('moves', 'player')"
+                            :key="moves.name"
+                            class="list-group-item col-md-5"
+                            :class="{ 'mt-3': index >= 2 }">
+                            {{ moves.name }}: {{ moves.pp }}
+                        </li>
+                    </div>
+                </div>
+            </div>
+            <br>
+<!--            <div class="pokemon-weaknesses">-->
+<!--                <span class="weakness-label">Weakness&nbsp;</span>-->
+<!--                <template v-for="(value, key) in this.getCurrentPokemonData('player').gen1Damage">-->
+<!--                    <template v-if="key === 'fourTimesWeakness' && value.length > 0">-->
+<!--                        <span v-for="weaknessImage in value" :key="weaknessImage">-->
+<!--                          <img class="weakness-value-4x" :src="weaknessImage" alt="weaknesses">-->
+<!--                        </span>-->
+<!--                    </template>-->
+<!--                    <template v-if="key === 'twoTimesWeakness' && value.length > 0">-->
+<!--                        <span v-for="weaknessImage in value" :key="weaknessImage">-->
+<!--                          <img class="weakness-value-2x" :src="weaknessImage" alt="weaknesses">-->
+<!--                        </span>-->
+<!--                    </template>-->
+<!--                </template>-->
+<!--            </div>-->
+<!--            <br>-->
+<!--            <div class="pokemon-resistances">-->
+<!--                <span class="resistance-label">Resistance</span>-->
+<!--                <template v-for="(value, key) in this.getCurrentPokemonData('player').gen1Damage">-->
+<!--                    <template v-if="key === 'resistedDamage' && value.length > 0">-->
+<!--                        <span v-for="resistanceImage in value" :key="resistanceImage">-->
+<!--                          <img class="resistance-value" :src="resistanceImage" alt="resistances">-->
+<!--                        </span>-->
+<!--                    </template>-->
+<!--                    <template v-if="key === 'quarterDamage' && value.length > 0">-->
+<!--                        <span v-for="resistanceImage in value" :key="resistanceImage">-->
+<!--                          <img class="resistance-value-quarter" :src="resistanceImage" alt="resistances">-->
+<!--                        </span>-->
+<!--                    </template>-->
+<!--                    <template v-if="key === 'halfDamage' && value.length > 0">-->
+<!--                        <span v-for="resistanceImage in value" :key="resistanceImage">-->
+<!--                          <img class="resistance-value-half" :src="resistanceImage" alt="resistances">-->
+<!--                        </span>-->
+<!--                    </template>-->
+<!--                </template>-->
+<!--            </div>-->
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+<script src="./data/signalr.min.js"></script>
+<script src="./data/vue.global.js"></script>
+<script src="http://localhost:8085/dist/gameHookMapperClient.js"></script>
+<script src="data/CrossGenData.js"></script>
+<script type="text/javascript">
+    const app = Vue.createApp({
+        data() {
+            return {
+                ready: false,
+                mapper: null,
+                playerLocation: locations,
+                pokemonData: crossGenPokemonData
+            }
+        },
+        methods: {
+            parseJSON: function (jsonData, name, property, section = null) {
+                let jsonObject = jsonData[0][name];
+                if (!jsonObject) {
+                    return null;
+                }
+
+                if (section) {
+                    const dataSection = jsonObject[section];
+                    if (!dataSection) {
+                        return null;
+                    }
+                    return dataSection[property];
+                }
+
+                return jsonObject[property];
+            },
+            getPokemonDataFromJSON: function (dataValue, target) {
+                let mapper = this.mapper;
+                let jsonFile = this.pokemonData;
+                let pokemonData;
+                let dataToReturn;
+
+                if (target === 'player') pokemonData = mapper.properties.player.team[0].species;
+                if (target === 'enemy') pokemonData = mapper.properties.battle.enemyPokemon.species;
+                switch (dataValue) {
+                    case 'dexEntry':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "nationalDexEntry");
+                        break;
+                    case 'animatedSprite':
+                        if (!this.parseJSON(jsonFile, pokemonData, "nationalDexEntry")) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/pokemon/animated/${this.parseJSON(jsonFile, pokemonData, "nationalDexEntry")}.webp`;
+                        break;
+                    case 'staticSprite':
+                        if (!this.parseJSON(jsonFile, pokemonData, "nationalDexEntry")) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/pokemon/static/${this.parseJSON(jsonFile, pokemonData, "nationalDexEntry")}.webp`;
+                        break;
+                    case 'shinySprite':
+                        if (!pokemonData) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/pokemon/shiny/${pokemonData.species}.webp`;
+                        break;
+                    case 'background':
+                        if (!pokemonData) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/PokemonCardBackgrounds/${pokemonData.species}.webp`;
+                        break;
+                    case 'typeColor':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "typeColor");
+                        break;
+                    case 'typeLink':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "typeLink");
+                        break;
+                    case 'type1':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "type1");
+                        break;
+                    case 'type2':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "type2");
+                        break;
+                    case 'expYield':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "expYield");
+                        break;
+                    case 'catchRate':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "catchRate");
+                        break;
+                    case 'growthFormula':
+                        let growthFormula = this.parseJSON(jsonFile, pokemonData, "growthFormula");
+                        let nextLevel = this.mapper.properties.player.team[0].level.value + 1;
+                        let formulaForNextLevel = Math.floor(this.evaluateFormula(growthFormula, nextLevel));
+                        let currentExp = this.mapper.properties.player.team[0].expPoints.value;
+                        dataToReturn = formulaForNextLevel - currentExp;
+                        break;
+                    case 'growthRate':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "growthRate");
+                        break;
+                    case 'evolutionLine':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "evolutionLine", "gen1");
+                        break;
+                    case 'stats':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "stats", "gen1");
+                        break;
+                    case 'damageTaken':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "damageTaken", "gen1");
+                        break;
+                    case 'moves':
+                        dataToReturn = this.parseJSON(jsonFile, pokemonData, "moves", "gen1");
+                        break;
+                    case 'criticalHitRate':
+                        let result = '';
+                        result = this.getCurrentPokemonData(target).baseSpeed * 100 / 512;
+                        dataToReturn = Math.floor(result * 100) / 100;
+                }
+                return dataToReturn;
+            },
+            getPokemonDataFromMapper: function (dataValue, target) {
+                let mapper = this.mapper;
+                let dataToReturn = '';
+                let pokemonData;
+
+                if (mapper === null) {
+                    return 0;
+                }
+                pokemonData = target === 'player' ? mapper.properties.player.team[0] : mapper.properties.battle.playerPokemon;
+                if (target === 'enemy') {
+                    pokemonData = mapper.properties.battle.enemyPokemon;
+                }
+
+                switch (dataValue) {
+                    case 'name':
+                        dataToReturn = mapper.properties.player.team[0].nickname;
+                        break;
+                    case 'shinySprite':
+                        if (!pokemonData) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/pokemon/shiny/${pokemonData.species}.webp`;
+                        break;
+                    case 'background':
+                        if (!pokemonData) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/PokemonCardBackgrounds/${pokemonData.species}.webp`;
+                        break;
+                    case 'level':
+                        dataToReturn = pokemonData.level;
+                        break;
+                    case 'type1':
+                        dataToReturn = pokemonData.type1;
+                        break;
+                    case 'type2':
+                        dataToReturn = pokemonData.type2;
+                        break;
+                    case 'badges':
+                        dataToReturn = {
+                            badge: Object.values(mapper.properties.player.badges).filter(Boolean).length
+                        };
+                        break;
+                    case 'stats':
+                        dataToReturn = Object.entries(pokemonData.stats)
+                            .map(([name, statValue]) => {
+                                if (statValue?.value !== undefined) {
+                                    // If the name is 'hp', add an object for 'maxHp'
+                                    if (name === 'hp') {
+                                        return [
+                                            {
+                                                name: 'hp',
+                                                value: statValue.value + ' / ' +  pokemonData.stats.maxHp?.value,
+                                            },
+                                    ]}
+                                    // If the name is 'maxHp', skip it since it's already added when 'hp' is processed
+                                    if (name === 'maxHp') {
+                                        return null;
+                                    }
+                                    return {
+                                        name,
+                                        value: statValue.value,
+                                    };
+                                }
+                                return null;
+                            })
+                            // Flatten the array (since we have a nested array for 'hp' and 'maxHp')
+                            .flat()
+                            // Filter out null values
+                            .filter(item => item !== null);
+                        break;
+                    case 'moves':
+                        dataToReturn = pokemonData.moves
+                            .filter(move => move?.move !== null && move?.pp !== null && move?.ppUp !== null) // Filter out null or items without 'item' property
+                            .map(move => {
+                                if (move.move?.value && move?.pp && move?.ppUp) {
+                                    return {name: move.move.value, pp: move.pp.value, ppUp: move.ppUp.value};
+                                }
+                                return null;
+                            })
+                            .filter(item => item !== null); // Filter out any null items returned from the map() function
+                        break;
+                    case 'statusCondition':
+                        dataToReturn = mapper.properties.player.team[0].statusCondition.value;
+                        break;
+                    case 'statusConditionImage':
+                        if (!pokemonData) dataToReturn = './Images/misc/HD_transparent_picture.webp';
+                        dataToReturn = `./Images/statusConditions/${pokemonData.statusCondition.value}.webp`;
+                        break;
+                    case 'battleStatusCondition':
+                        dataToReturn = Object.entries(mapper.properties.battle.playerPokemon.status)
+                            .map(([name, statusValue]) => {
+                                if (statusValue?.value !== undefined) {
+                                    return {name, value: statusValue.value};
+                                }
+                                return null;
+                            });
+                        break;
+                    case 'statModifiers':
+                        dataToReturn = Object.entries(mapper.properties.battle.playerPokemon.statModifiers)
+                            .map(([name, statValue]) => {
+                                if (statValue?.value !== undefined) {
+                                    return {name, value: statValue.value};
+                                }
+                                return null;
+                            });
+                        break;
+                    case 'money':
+                        dataToReturn = mapper.properties.bag.money;
+                        break;
+                    case 'coins':
+                        dataToReturn = mapper.properties.bag.gameCornerCoins;
+                        break;
+                    case 'bagItems':
+                        dataToReturn = mapper.properties.bag.items
+                            .filter(item => item?.item !== null && item?.quantity !== null) // Filter out null or items without 'item' property
+                            .map(item => {
+                                if (item.item?.value && item?.quantity) {
+                                    return {name: item.item.value, quantity: item.quantity.value};
+                                }
+                                return null;
+                            })
+                            .filter(item => item !== null); // Filter out any null items returned from the map() function
+                        break;
+                    case 'pcItems':
+                        dataToReturn = mapper.properties.pc.pokemonStorage.itemStorage.items
+                            .filter(item => item?.item !== null && item?.quantity !== null) // Filter out null or items without 'item' property
+                            .map(item => {
+                                if (item.item?.value && item?.quantity) {
+                                    return {name: item.item.value, quantity: item.quantity.value};
+                                }
+                                return null;
+                            })
+                            .filter(item => item !== null); // Filter out any null items returned from the map() function
+                        break;
+                    case 'gameTime':
+                        dataToReturn = mapper.properties.gameTime.hours + ':' + mapper.properties.gameTime.minutes + ':' + mapper.properties.gameTime.seconds;
+                        break;
+                    case 'frames':
+                        dataToReturn = mapper.properties.gameTime.frames;
+                        break;
+                    case 'gen':
+                        dataToReturn = mapper.properties.game.generation;
+                        break;
+                }
+
+                return dataToReturn;
+            },
+            evaluateFormula(formula, level) {
+                if (formula) {
+                    const replacedX = formula.replace(/x/g, level);
+                    return eval(replacedX);
+                }
+            },
+            getPlayerLocation: function() {
+                let jsonFile = this.playerLocation;
+                let locationNames = Object.keys(jsonFile[0]); // Retrieve all the item names from the JSON object
+                let result = [];
+
+                for (let locationName of locationNames) {
+                    if (this.mapper.properties.overworld.map.value.includes(locationName)){
+                        let itemData = {
+                            name: locationName,
+                            top: this.parseJSON(jsonFile, locationName, "top"),
+                            bottom: this.parseJSON(jsonFile, locationName, "bottom"),
+                            left: this.parseJSON(jsonFile, locationName, "left"),
+                            right: this.parseJSON(jsonFile, locationName, "right"),
+                        };
+                        result.push(itemData);
+                    } else {
+                        if (this.mapper.properties.overworld.map.value.includes(locationName)) {
+                            let itemData = {
+                                name: locationName,
+                                top: this.parseJSON(jsonFile, locationName, "top"),
+                                bottom: this.parseJSON(jsonFile, locationName, "bottom"),
+                                left: this.parseJSON(jsonFile, locationName, "left"),
+                                right: this.parseJSON(jsonFile, locationName, "right"),
+                            };
+                            result.push(itemData);
+                        }
+                    }
+                }
+
+                return result;
+            }
+        },
+        computed: {
+        },
+        mounted: async function () {
+            this.mapper = new GameHookMapperClient();
+            this.mapper.onConnected = (x) => this.ready = true
+            this.mapper.onDisconnected = (x) => this.ready = false
+
+            await this.mapper.connect();
+        },
+    }).mount('#app')
+</script>
+</body>
